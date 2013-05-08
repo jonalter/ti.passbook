@@ -4,10 +4,14 @@
  * Appcelerator Titanium is Copyright (c) 2009-2010 by Appcelerator, Inc.
  * and licensed under the Apache Public License (version 2)
  */
+
+//#import <PassKit/PassKit.h>
 #import "TiPassbookModule.h"
 #import "TiBase.h"
 #import "TiHost.h"
 #import "TiUtils.h"
+#import "TiApp.h"
+#import "TiPassbookPassProxy.h"
 
 @implementation TiPassbookModule
 
@@ -32,6 +36,8 @@
 	// this method is called when the module is first loaded
 	// you *must* call the superclass
 	[super startup];
+    
+    _passLibrary = [[PKPassLibrary alloc] init];
 	
 	NSLog(@"[INFO] %@ loaded",self);
 }
@@ -50,6 +56,7 @@
 
 -(void)dealloc
 {
+    RELEASE_TO_NIL(_passLibrary);
 	// release any resources that have been retained by the module
 	[super dealloc];
 }
@@ -85,6 +92,122 @@
 }
 
 #pragma Public APIs
+
+//MAKE_SYSTEM_PROP(ADDED_PASSES, PKPassLibraryAddedPassesUserInfoKey);
+//MAKE_SYSTEM_PROP(REMOVED_PASS, PKPassLibraryRemovedPassInfosUserInfoKey);
+//MAKE_SYSTEM_PROP(REPLACEMENT_PASSES, PKPassLibraryReplacementPassesUserInfoKey);
+//MAKE_SYSTEM_PROP(PASS_TYPE, PKPassLibraryPassTypeIdentifierUserInfoKey);
+//MAKE_SYSTEM_PROP(SERIAL_NUMBER, PKPassLibrarySerialNumberUserInfoKey);
+
+
+-(BOOL)isPassLibraryAvailable:(id)args
+{
+    return NUMBOOL([PKPassLibrary isPassLibraryAvailable]);
+}
+
+-(TiPassbookPassProxy *)addPass:(id)args
+{
+    ENSURE_SINGLE_ARG(args, NSDictionary);
+    TiBlob *blob = [args objectForKey:@"pass"];
+    ENSURE_TYPE(blob, TiBlob);
+    
+    NSError *error = nil;
+    PKPass *pass = [[PKPass alloc] initWithData:blob.data error:&error];
+    
+    if (error) {
+        NSLog(@"ERROR in addPass");
+    } else {
+        NSLog(@"ALL GOOD in addPass");
+    }
+    
+    PKAddPassesViewController *addPassVC = [[PKAddPassesViewController alloc] initWithPass:pass];
+    [[TiApp controller] presentViewController:addPassVC animated:YES completion:^{}];
+    
+    return [[[TiPassbookPassProxy alloc] initWithPass:pass pageContext:[self executionContext]] autorelease];
+}
+
+-(BOOL)containsPass:(id)args
+{
+    ENSURE_SINGLE_ARG(args, NSDictionary);
+    TiBlob *blob = [args objectForKey:@"pass"];
+    ENSURE_TYPE(blob, TiBlob);
+    
+    NSError *error = nil;
+    PKPass *pass = [[PKPass alloc] initWithData:blob.data error:&error];
+    
+    if (error) {
+        NSLog(@"ERROR in addPass");
+    } else {
+        NSLog(@"ALL GOOD in addPass");
+    }
+    
+    return NUMBOOL([_passLibrary containsPass:pass]);
+}
+
+-(void)removePass:(id)args
+{
+    // Need to take PKPass or TiPassbookPassProxy
+    ENSURE_SINGLE_ARG(args, NSDictionary);
+    TiBlob *blob = [args objectForKey:@"pass"];
+    ENSURE_TYPE(blob, TiBlob);
+    
+    NSError *error = nil;
+    PKPass *pass = [[PKPass alloc] initWithData:blob.data error:&error];
+    
+    if (error) {
+        NSLog(@"ERROR in addPass");
+    } else {
+        NSLog(@"ALL GOOD in addPass");
+    }
+    
+    [_passLibrary removePass:pass];
+}
+
+-(BOOL)replacePassWithPass:(id)args
+{
+    ENSURE_SINGLE_ARG(args, NSDictionary);
+    TiBlob *blob = [args objectForKey:@"pass"];
+    NSError *error = nil;
+    PKPass *pass = [[PKPass alloc] initWithData:blob.data error:&error];
+    
+    if (error) {
+        NSLog(@"ERROR in addPass");
+    } else {
+        NSLog(@"ALL GOOD in addPass");
+    }
+    
+    return NUMBOOL([_passLibrary replacePassWithPass:pass]);
+}
+
+-(NSArray *)passes
+{
+    NSArray *pkPasses = [_passLibrary passes];
+    NSMutableArray *result = [NSMutableArray arrayWithCapacity:[pkPasses count]];
+    
+    [pkPasses enumerateObjectsUsingBlock:^(PKPass *pkPass, NSUInteger idx, BOOL *stop){
+        [result addObject:[[[TiPassbookPassProxy alloc] initWithPass:pkPass pageContext:[self executionContext]] autorelease]];
+    }];
+    
+    return result;
+}
+
+-(TiPassbookPassProxy *)passWithPassTypeIdentifierAndSerialNumber:(id)args
+{
+    ENSURE_SINGLE_ARG(args, NSDictionary);
+    NSString *passTypeIdentifier = [args objectForKey:@"passTypeIdentifier"];
+    NSString *serialNumber = [args objectForKey:@"serialNumber"];
+    
+    ENSURE_STRING(passTypeIdentifier);
+    ENSURE_STRING(serialNumber);
+    
+    PKPass *pkPass = [_passLibrary passWithPassTypeIdentifier:passTypeIdentifier serialNumber:serialNumber];
+
+    if (!pkPass) {
+        return nil;
+    }
+    
+    return [[[TiPassbookPassProxy alloc] initWithPass:pkPass pageContext:[self executionContext]] autorelease];
+}
 
 -(id)example:(id)args
 {
