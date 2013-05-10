@@ -8,12 +8,13 @@
 #import <PassKit/PassKit.h>
 #import "TiModule.h"
 
-@interface TiPassbookModule : TiModule 
+@interface TiPassbookModule : TiModule <PKAddPassesViewControllerDelegate>
 {
 @private
     PKPassLibrary *_passLibrary;
+    KrollCallback *_addPassCloseCallback;
 }
 
-@property(readonly, nonatomic) NSArray *passes;
+//@property(readonly, nonatomic) NSArray *passes;
 
 @end

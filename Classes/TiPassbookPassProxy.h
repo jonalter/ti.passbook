@@ -11,11 +11,12 @@
 
 @interface TiPassbookPassProxy : TiProxy
 {
-@private
-    PKPass *_pass;
+//@private
+//    PKPass *_pass;
 }
-@property(readonly, nonatomic) NSString *serialNumber;
+@property(readonly, nonatomic) PKPass *pass;
 
--(TiPassbookPassProxy *)initWithPass:(PKPass *) pageContext:(id<TiEvaluator>)context;
+-(TiPassbookPassProxy *)initWithPass:(PKPass *)pass pageContext:(id<TiEvaluator>)context;
+-(TiPassbookPassProxy*)initWithData:(NSData *)data pageContext:(id<TiEvaluator>)context;
 
 @end

@@ -12,6 +12,8 @@
 
 @implementation TiPassbookPassProxy
 
+@synthesize pass = _pass;
+
 -(TiPassbookPassProxy *)initWithPass:(PKPass *)pass pageContext:(id<TiEvaluator>)context
 {
     NSLog(@"TiPassbookPassProxy initWithPass");
@@ -39,11 +41,12 @@
 -(void)dealloc
 {
     RELEASE_TO_NIL(_pass);
+    [super dealloc];
 }
 
 #pragma mark Public APIs
 
--(id)localizedValueForFieldKey:(NSString *)arg
+-(id)localizedValueForFieldKey:(id)arg
 {
     ENSURE_SINGLE_ARG(arg, NSString);
     return [_pass localizedValueForFieldKey:arg];

@@ -38,6 +38,9 @@
 	[super startup];
     
     _passLibrary = [[PKPassLibrary alloc] init];
+    
+    // Listen for PKLibraryEvents
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(passLibraryDidChange:) name:PKPassLibraryDidChangeNotification object:_passLibrary];
 	
 	NSLog(@"[INFO] %@ loaded",self);
 }
@@ -48,6 +51,9 @@
 	// typically this is during shutdown. make sure you don't do too
 	// much processing here or the app will be quit forceably
 	
+    // Listening for PKLibraryEvents
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    
 	// you *must* call the superclass
 	[super shutdown:sender];
 }
@@ -57,6 +63,7 @@
 -(void)dealloc
 {
     RELEASE_TO_NIL(_passLibrary);
+    RELEASE_TO_NIL(_addPassCloseCallback);
 	// release any resources that have been retained by the module
 	[super dealloc];
 }
@@ -70,28 +77,96 @@
 	[super didReceiveMemoryWarning:notification];
 }
 
+//#pragma mark - Listener Notifications
+//
+//-(void)_listenerAdded:(NSString *)type count:(int)count
+//{
+//	if (count == 1 && [type isEqualToString:@"change"])
+//	{
+////		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(passLibraryDidChange:) name:PKPassLibraryDidChangeNotification object:_passLibrary];
+//	}
+//}
+//
+//-(void)_listenerRemoved:(NSString *)type count:(int)count
+//{
+//	if (count == 0 && [type isEqualToString:@"change"])
+//	{
+////		[[NSNotificationCenter defaultCenter] removeObserver:self];
+//	}
+//}
+
 #pragma mark Listener Notifications
 
--(void)_listenerAdded:(NSString *)type count:(int)count
+-(void)passLibraryDidChange:(NSNotification *)note
 {
-	if (count == 1 && [type isEqualToString:@"my_event"])
-	{
-		// the first (of potentially many) listener is being added 
-		// for event named 'my_event'
-	}
+    NSDictionary *userInfo = [note userInfo];
+    NSArray *passArray;
+    
+    if (passArray = [userInfo objectForKey:PKPassLibraryAddedPassesUserInfoKey]) {
+        NSLog(@"Added Passes");
+        
+        NSDictionary *event = [self pkPassArrayToEventDictionary:passArray];
+        [self fireEvent:@"addedpasses" withObject:event];
+    }
+    
+    if (passArray = [userInfo objectForKey: PKPassLibraryRemovedPassInfosUserInfoKey]) {
+        NSLog(@"Removed Passes");
+        
+        NSDictionary *event = [self passIdArrayToEventDictionary:passArray];
+        [self fireEvent:@"removedpasses" withObject:event];
+    }
+    
+    if (passArray = [userInfo objectForKey:PKPassLibraryReplacementPassesUserInfoKey]) {
+        NSLog(@"Replacement Passes");
+        
+        NSDictionary *event = [self pkPassArrayToEventDictionary:passArray];
+        [self fireEvent:@"replacedpasses" withObject:event];
+    }
+
 }
 
--(void)_listenerRemoved:(NSString *)type count:(int)count
+-(NSDictionary *)pkPassArrayToEventDictionary:(NSArray *)passArray
 {
-	if (count == 0 && [type isEqualToString:@"my_event"])
-	{
-		// the last listener called for event named 'my_event' has
-		// been removed, we can optionally clean up any resources
-		// since no body is listening at this point for that event
-	}
+    NSMutableArray *passes = [NSMutableArray arrayWithCapacity:[passArray count]];
+    for (PKPass *pkPass in passArray) {
+        [passes addObject:[[[TiPassbookPassProxy alloc] initWithPass:pkPass pageContext:[self executionContext]] autorelease]];
+    }
+    return [NSDictionary dictionaryWithObject:passes forKey:@"passes"];
 }
 
-#pragma Public APIs
+-(NSDictionary *)passIdArrayToEventDictionary:(NSArray *)passArray
+{
+    NSMutableArray *passes = [NSMutableArray arrayWithCapacity:[passArray count]];
+    for (NSDictionary *passDict in passArray) {
+        NSLog(@"SN: %@", [passDict objectForKey:PKPassLibrarySerialNumberUserInfoKey]);
+        
+        [passes addObject:[NSDictionary dictionaryWithObjectsAndKeys:
+                           [passDict objectForKey:PKPassLibraryPassTypeIdentifierUserInfoKey], @"passTypeIdentifier",
+                           [passDict objectForKey:PKPassLibrarySerialNumberUserInfoKey], @"serialNumber",
+                           nil]];
+    }
+    return [NSDictionary dictionaryWithObject:passes forKey:@"passIds"];
+}
+
+#pragma mark - PKAddPassesViewControllerDelegate
+
+-(void)addPassesViewControllerDidFinish:(PKAddPassesViewController *)controller
+{
+    NSLog(@"DISMISSING VC");
+    
+    [UIView animateWithDuration:0.5 animations:^{
+        controller.view.alpha = 0;
+    } completion:^(BOOL b){
+        [controller dismissViewControllerAnimated:YES completion:^{}];
+        controller.view.alpha = 1;
+    }];
+    
+    if (_addPassCloseCallback) {
+        [_addPassCloseCallback call:[NSArray array] thisObject:nil];
+    }
+}
+
+#pragma mark - Public APIs
 
 //MAKE_SYSTEM_PROP(ADDED_PASSES, PKPassLibraryAddedPassesUserInfoKey);
 //MAKE_SYSTEM_PROP(REMOVED_PASS, PKPassLibraryRemovedPassInfosUserInfoKey);
@@ -107,9 +182,24 @@
 
 -(TiPassbookPassProxy *)addPass:(id)args
 {
-    ENSURE_SINGLE_ARG(args, NSDictionary);
-    TiBlob *blob = [args objectForKey:@"pass"];
+    // User should check for pass in library with containsPass before adding
+    // Will only be called with DATA
+    ENSURE_ARRAY(args);
+    NSDictionary *dict = [args objectAtIndex:0];
+    
+    KrollCallback *cb = nil;
+    if ([args count] > 1) {
+        cb = [args objectAtIndex:1];
+    }
+    
+    ENSURE_DICT(dict);
+    TiBlob *blob = [dict objectForKey:@"pass"];
     ENSURE_TYPE(blob, TiBlob);
+    
+    ENSURE_TYPE_OR_NIL(cb, KrollCallback);
+    if (cb) {
+        _addPassCloseCallback = [cb retain];
+    }
     
     NSError *error = nil;
     PKPass *pass = [[PKPass alloc] initWithData:blob.data error:&error];
@@ -121,6 +211,7 @@
     }
     
     PKAddPassesViewController *addPassVC = [[PKAddPassesViewController alloc] initWithPass:pass];
+    [addPassVC setDelegate:self];
     [[TiApp controller] presentViewController:addPassVC animated:YES completion:^{}];
     
     return [[[TiPassbookPassProxy alloc] initWithPass:pass pageContext:[self executionContext]] autorelease];
@@ -128,6 +219,8 @@
 
 -(BOOL)containsPass:(id)args
 {
+    // No Entitlement Needed
+    // Will only be called with DATA
     ENSURE_SINGLE_ARG(args, NSDictionary);
     TiBlob *blob = [args objectForKey:@"pass"];
     ENSURE_TYPE(blob, TiBlob);
@@ -146,25 +239,18 @@
 
 -(void)removePass:(id)args
 {
-    // Need to take PKPass or TiPassbookPassProxy
+    // Need to take PKPass or TiPassbookPassProxy ???
+    // Will only be called with a TiPassbookPassProxy
     ENSURE_SINGLE_ARG(args, NSDictionary);
-    TiBlob *blob = [args objectForKey:@"pass"];
-    ENSURE_TYPE(blob, TiBlob);
+    TiPassbookPassProxy *pass = [args objectForKey:@"pass"];
+    ENSURE_TYPE(pass, TiPassbookPassProxy);
     
-    NSError *error = nil;
-    PKPass *pass = [[PKPass alloc] initWithData:blob.data error:&error];
-    
-    if (error) {
-        NSLog(@"ERROR in addPass");
-    } else {
-        NSLog(@"ALL GOOD in addPass");
-    }
-    
-    [_passLibrary removePass:pass];
+    [_passLibrary removePass:[pass pass]];
 }
 
 -(BOOL)replacePassWithPass:(id)args
 {
+    // Will only be called with DATA
     ENSURE_SINGLE_ARG(args, NSDictionary);
     TiBlob *blob = [args objectForKey:@"pass"];
     NSError *error = nil;
@@ -181,6 +267,9 @@
 
 -(NSArray *)passes
 {
+    // Needs Entitlement
+    // No order
+    // Should we sort them?
     NSArray *pkPasses = [_passLibrary passes];
     NSMutableArray *result = [NSMutableArray arrayWithCapacity:[pkPasses count]];
     
@@ -208,6 +297,26 @@
     
     return [[[TiPassbookPassProxy alloc] initWithPass:pkPass pageContext:[self executionContext]] autorelease];
 }
+
+-(void)showPass:(id)args
+{
+    // Must be pass from library
+    // Will not open if not in library
+    // Will only be called with TiPassbookPassProxy
+    ENSURE_SINGLE_ARG(args, NSDictionary);
+    TiPassbookPassProxy *pass = [args objectForKey:@"pass"];
+    ENSURE_TYPE(pass, TiPassbookPassProxy);
+    
+    PKPass *pkPass = [pass pass];
+    
+    [[UIApplication sharedApplication] openURL:[pkPass passURL]];
+}
+
+
+
+
+
+
 
 -(id)example:(id)args
 {
