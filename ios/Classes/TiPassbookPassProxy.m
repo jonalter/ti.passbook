@@ -23,21 +23,6 @@
     return self;
 }
 
--(TiPassbookPassProxy*)initWithData:(NSData *)data pageContext:(id<TiEvaluator>)context
-{
-    NSLog(@"TiPassbookPassProxy initWithData");
-    
-    NSError *error = nil;
-    PKPass *pass = [[PKPass alloc] initWithData:data error:&error];
-    
-    if (error) {
-        NSLog(@"[ERROR] initWithData: %@", error);
-        return nil;
-    } else {
-        return [self initWithPass:pass pageContext:context];
-    }
-}
-
 -(void)dealloc
 {
     RELEASE_TO_NIL(_pass);
@@ -75,12 +60,6 @@ MAKE_READONLY_PROP(_pass, relevantDate);
 -(TiBlob*)icon
 {
     return [[[TiBlob alloc] initWithImage:[_pass icon]] autorelease];
-}
-
-
--(void)test:(id)args
-{
-    NSLog(@"TEST");
 }
 
 @end

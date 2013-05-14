@@ -26,4 +26,4 @@
 // IMPORTANT NOTE: always use $(inherited) in your overrides
 // 
 
-OTHER_LDFLAGS=$(inherited) -framework PassKit
+OTHER_LDFLAGS=$(inherited) -weak_framework PassKit
