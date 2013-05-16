@@ -317,6 +317,9 @@ module.exports = new function ()
 
 		valueOf(testRun, pass.localizedValueForFieldKey( customKey )).shouldBeString();
 		valueOf(testRun, pass.localizedValueForFieldKey( "notakey" )).shouldBeUndefined();
+		valueOf(testRun, function() {
+			pass.localizedValueForFieldKey( 5 );
+		}).shouldThrowException();
 
 		finish(testRun);
 	};
@@ -409,6 +412,24 @@ module.exports = new function ()
 		valueOf(testRun, oldPass.webServiceURL).shouldNotBe( newPass.webServiceURL );
 	};
 
+	this.testShowPassInvalidArguments = function (testRun)
+	{
+		valueOf(testRun, function() {
+			Passbook.showPass();
+		}).shouldThrowException();
+		valueOf(testRun, function() {
+			Passbook.showPass({});
+		}).shouldThrowException();
+		valueOf(testRun, function() {
+			Passbook.showPass(null);
+		}).shouldThrowException();
+		valueOf(testRun, function() {
+			Passbook.showPass("Buttercup");
+		}).shouldThrowException();
+
+		finish(testRun);
+	};
+
 	this.testRemovePassInvalidArguments = function (testRun)
 	{
 		valueOf(testRun, function() {
@@ -478,6 +499,15 @@ module.exports = new function ()
 		finish(testRun);
 	};
 
+	this.testPassesPropertyWithNoPasses = function (testRun)
+	{
+		var passes = Passbook.passes;
+
+		valueOf(testRun, passes.length).shouldBe(0);
+
+		finish(testRun);
+	};
+
 	// Populate the array of tests based on the 'hammer' convention
-	this.tests = require('hammer').populateTests(this, 20000);
+	this.tests = require('hammer').populateTests(this, 30000);
 };

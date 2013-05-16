@@ -1,87 +1,81 @@
 ---
-name: Modules.Newsstand.Issue
-summary: A <Modules.Newsstand> object which represents an issue from the Newsstand library.
+name: Modules.Passbook.Pass
+summary: A <Modules.Passbook> object which represents a Pass from the Passbook library.
+description: |
+
+    ### Pass Resources
+    -   For more info on passes see the [PKPass Class Reference](http://developer.apple.com/library/ios/#documentation/PassKit/Reference/PKPass_Ref/PKPass.html)
+
 extends: Titanium.Proxy
-plarforms: [iphone, ipad]
+plarforms: [iphone]
 excludes:
     methods: [addEventListener, fireEvent, removeEventListener, applyProperties]
     properties: [bubbleParent]
 createable: false
-    
+
 methods:
-  - name: downloadAsset
-    summary: Downloads an asset for this issue. This connection is managed by the system. This allows the download to run in the background even when the app is not running. Download progress and errors can be captured using event listeners.
+  - name: localizedValueForFieldKey
+    summary: Returns the localized value for a specified field of the pass.
     description: |
-        **Note:** Throws an exception if called twice to download the same asset for a single issue.
-    
+
         **Example**
 
-            issue.downloadAsset({
-                url:contentURL,
-                filename:'TEST.TST',
-                userInfo:{
-                    id:1234,
-                    name:'TEST1'
-                }
-            });
-            
+            var testProp = pass.localizedValueForFieldKey('testprop');
+
     parameters:
-      - name: props
-        summary: 
-        type: Dictionary<NewsstandDownloadAssetProps>
+      - name: key
+        summary: The key for the value to be retreived from the pass
+        type: String
+    returns:
+        type: String
 
 properties:
-  - name: name
-    summary: The unique name of the issue
+  - name: passURL
+    summary: The URL that opens the pass in the Passbook app.
     type: String
     permission: "read-only"
-    
-  - name: date
-    summary: The date of the issue
-    type: String
-    permission: "read-only"
-        
-  - name: status
-    summary: The status of the issue
-    description: |
-        Possible statuses:
 
-        * <Modules.Newsstand.ISSUE_CONTENT_STATUS_NONE>
-        * <Modules.Newsstand.ISSUE_CONTENT_STATUS_DOWNLOADING>
-        * <Modules.Newsstand.ISSUE_CONTENT_STATUS_AVAILABLE>
+  - name: authenticationToken
+    summary: The token used to authenticate with the web service
     type: String
     permission: "read-only"
-          
-  - name: contentURL
-    summary: The contentURL of the issue
-    description: |
-        This is the location assets downloaded for the issue will be saved.
-        
-        **Note:** contentURL will be undefined after an issue is removed from the library.
+
+  - name: passTypeIdentifier
+    summary: The pass's type identifier.
     type: String
     permission: "read-only"
-    
----
-name: NewsstandDownloadAssetProps
-since: "1.0.0"
-platforms: [iphone, ipad]
-summary: A dictionary of properties to pass to the method
-properties:
-  - name: url
-    summary: Location of the asset to be downloaded
+
+  - name: serialNumber
+    summary: A value that uniquely identifies the pass.
     type: String
-    optional: false
-   
-  - name: userInfo
-    summary: A dictionary of properties that can be passed through with the request to the event listeners. (optional)
-    description: |
-        **Warning:** Do not include anything more than simple key value pairs. Including Titanium objects in userInfo will cause errors.
-    type: Dictionary
-    optional: true
+    permission: "read-only"
 
-  - name: filename
-    summary: The name of the file to be downloaded. If no name is specified here, the filename will be the last component of the url. (optional)
-    type: String 
-    optional: true
+  - name: webServiceURL
+    summary: The URL for your web service.
+    type: String
+    permission: "read-only"
 
-  
+  - name: localizedName
+    summary: The localized description of the pass's kind. (eg. "Boarding Pass")
+    type: String
+    permission: "read-only"
+
+  - name: localizedDescription
+    summary: The pass's localized description. (eg. "SJC -> PIT")
+    type: String
+    permission: "read-only"
+
+  - name: organizationName
+    summary: The name of the organization that created the pass. (eg. "Flying Airways")
+    type: String
+    permission: "read-only"
+
+  - name: relevantDate
+    summary: The date when the pass is most likely to be needed or useful.
+    type: String
+    permission: "read-only"
+
+  - name: icon
+    summary: The pass's icon.
+    type: Titanium.Blob
+    permission: "read-only"

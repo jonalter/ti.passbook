@@ -3,391 +3,245 @@ name: Modules.Passbook
 summary: The Passbook module allows you to access Apple's PassKit APIs
 description: |
     ### Requirements
-    This module requires iOS 6 or greater
     
-    ### Passbook Resources
-    -   [Passbook for Developers](https://developer.apple.com/Passbook/)
-    -   [Passbook Kit Framework Reference](https://developer.apple.com/library/ios/#documentation/StoreKit/Reference/NewsstandKit_Framework/_index.html)
+    -   iOS 6 or greater
 
-    ### Publishing
-    Apple allows you to update your app icon in iTunes connect so that the latest issue can always be displayed. Documentation around setting this up can be found in the [iTunes Connect Developer Guide](https://developer.apple.com/library/ios/#documentation/LanguagesUtilities/Conceptual/iTunesConnect_Guide/14_Newsstand/Newsstand.html).
+    ### Passbook Resources
+
+    -   [Passbook for Developers](https://developer.apple.com/Passbook/)
+    -   [Passbook Kit Framework Reference](https://developer.apple.com/library/ios/#documentation/UserExperience/Reference/PassKit_Framework/_index.html)
 
     ### Getting Started
 
     View the [Using Titanium Modules](http://docs.appcelerator.com/titanium/latest/#!/guide/Using_Titanium_Modules) document for instructions on getting
     started with using this module in your application.
 
-    ### Accessing the Newsstand Module
+    ### Accessing the Passbook Module
 
        To access this module from JavaScript, you would do the following:
 
-       	var Newsstand = require("ti.newsstand");
+        var Passbook = require("ti.passbook");
 
-       The newsstand variable is a reference to the Module object.
+       The `Passbook` variable is a reference to the Module object.
 
     ### Setup
+        
+    Some functions will not be successful on a device without the correct entitlements. 
+    To take full advanage of the functionality of this module you will need to setup entitlements for your app.
 
-    1. Setup the app as a Newsstand app by adding the code below to your tiapp.xml
-    2. Modify the `UINewsstandBindingEdge` and `UINewsstandBindingType` values to get different decorations on the icons. Available options can be found in Apple's [CoreFoundationKeys Documentation](https://developer.apple.com/library/mac/#documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html).
-    3. Add `newsstandicon.png` to the 'Resources/iphone' directory next to appicon.png
-    4. Run the app, you should see it in the Newsstand folder.
-    5. During development, be sure to call <Modules.Newsstand.enableDevMode> to remove the daily download limit.
+    ** Note:** It is not necessary to setup entitlements when running on the simulator.
 
-    tiapp.xml
+    #### Pass
+    1. Go to the Apple provisioning portal "Identifiers" > "Pass Type IDs"
+    2. Create a new Pass Type ID
+    3. Go to "App IDs"
+    4. Create an App ID and enable Passbook for your App ID
+    5. Go to "Provisioning Profiles"
+    6. Create a new Provisioning Profile and associate it with your App ID
+    7. Download and double click your Provisioning Profile
+    8. Go to the [Passbook Developer page](https://developer.apple.com/Passbook/) and download the "Example Passes and Sample Code"
+    9. In the "pass.json" file of one of the raw passes found in "Example Passes and Sample Code", replace the value for "passTypeIdentifier" with your Pass Type ID
+    10. In the "Example Passes and Sample Code" open the "signpass" project with Xcode and build it
+    11. Use the newload created signcode command line program to sign the pass that you just edited
+    12. You can add your new pass to your device by emailing it to your device or you can drag it into the simulator
 
-    	<ios>
-            <plist>
-                <dict>
-                    <key>CFBundleIcons</key>
-                    <dict>
-                        <key>CFBundlePrimaryIcon</key>
-                        <dict>
-                            <key>CFBundleIconFiles</key>
-                            <array>
-                                <string>appicon.png</string>
-                            </array>
-                        </dict>
-                        <key>UINewsstandIcon</key>
-                        <dict>
-                            <key>CFBundleIconFiles</key>
-                            <array>
-                                <string>newsstandicon.png</string>
-                            </array>
-                            <key>UINewsstandBindingEdge</key>
-                            <string>UINewsstandBindingEdgeLeft</string>
-                            <key>UINewsstandBindingType</key>
-                            <string>UINewsstandBindingTypeMagazine</string>
-                        </dict>
-                    </dict>
-                    <key>UINewsstandApp</key>
-                    <true/>
-                    <key>UIBackgroundModes</key>
-                    <array>
-                        <string>newsstand-content</string>
-                    </array>
-                </dict>
-            </plist>
-        </ios>
+    #### Entitlements
+    1. Build your project once for device (running on the simulator will not generate the Entitlements.plist file we need)
+    2. Look in the "build/iphone" folder of your project and find the Entitlements.plist file 
+    3. Copy the Entitlements.plist to the root of your project next to Resources
+    4. Edit the Entitlements.plist in the root of your project and add the lines below
 
-    ### Push Notifications
+    To entitle app for a single pass type id (replace the Pass Type ID with our own):
+        
+        <key>com.apple.developer.pass-type-identifiers</key>
+        <array>
+            <string>$(TeamIdentifierPrefix)pass.com.appc.passbook.lollipop</string>
+        </array>
 
-    Push notifications can be sent to the device to notify it that a new issue is available. The notification payload must contain a "content-available" key set to 1. If this is not set, iOS will not allow the application to wake in the background to download a new issue.
+    To enable all pass type identifiers from the provisioning profile (replace the App ID with our own):
 
-    	{
-    	  "aps":{
-    		"content-available":1,
-    	        },
-    	   "device_tokens": ["exampleToken4F2509D125889AED3466F4D1376B26C374190B3974739"]
-    	}
-
-    Use the <Titanium.Network.NOTIFICATION_TYPE_NEWSSTAND> type when calling <Titanium.Network.registerForPushNotifications>
-
-    	Ti.Network.registerForPushNotifications({
-    	    types:[
-    	        Ti.Network.NOTIFICATION_TYPE_NEWSSTAND
-    	    ],
-    	    success: eventSuccess,
-    	    error: eventError,
-    	    callback: eventCallback
-    	});
-
-    To enable your application to download assets in the background in response to a push notification, you *must* wrap 
-    your <Modules.Newsstand.Issue.downloadAsset> calls with calls to <Modules.Newsstand.beginBackgroundDownloadRequests> and <Modules.Newsstand.endBackgroundDownloadRequests>.
-
-    For example, the event callback specified for <Titanium.Network.registerForPushNotifications> might look like the following:
-
-    	function eventCallback(e) {
-    	  	if (e.data['content-available'] === 1) {
-    			Newsstand.beginBackgroundDownloadRequests();
-    			var issue = Newsstand.getIssue({
-    				name: issues[0].name
-    			});	
-    			if (!issue) {
-    				// if issue is not found then add it
-    				issue = Newsstand.addIssue({
-    					name: name,
-    					date: new Date()
-    				});
-    			}
-    			issue.downloadAsset({
-    				url: issues[0].content,
-    				userInfo: {
-    					id: 9999,
-    					name: 'TESTBACKGROUND'
-    				}
-    			});
-    			Newsstand.endBackgroundDownloadRequests();
-    	  	}
-    	}
-    	
+        <key>keychain-access-groups</key>
+        <array>
+            <string>$(AppIdentifierPrefix)com.appc.passbook</string>
+        </array>
     
 extends: Titanium.Module
 since: "1.0.0"
-platforms: [iphone, ipad]
+platforms: [iphone]
 excludes:
     methods: [fireEvent, applyProperties]
     properties: [bubbleParent]
 
 methods:
-  - name: enableDevMode
-    summary: Newsstand push notifications are only allowed one background download per day. This function will disable this limit for development devices during testing.
+  - name: isPassLibraryAvailable
+    summary: Returns whether the pass library is available.
     description: |
-        **Note:** A development device refers to a device which has been recognized in Xcode Organizer as having the "Use for Development" checkbox enabled. 
         
+        This method is used to see if Passbook is supported on the current device and 
+        should be called before attempting to use any other methods of this module.
+
         **Example**
 
-            Newsstand.enableDevMode();
+            var available = Passbook.isPassLibraryAvailable();
 
-  - name: beginBackgroundDownloadRequests
-    summary: Signals the start of a series of <Modules.Newsstand.Issue.downloadAsset> calls. This call notifies the device that additional time may be needed by the application while running in the background.
+    returns: 
+        type: Boolean
+
+  - name: addPass
+    summary: Displays the pass to the user and allows them to add the pass to the library or cancel.
     description: |
+        Throws an exception if there is a problem with the pass or the add pass view could not be created.
+
         **Example**
 
-            Newsstand.beginBackgroundDownloadRequests();
-            issue1.downloadAsset(...);
-            issue2.downloadAsset(...);
-            Newsstand.endBackgroundDownloadRequests();
-  
-  - name: endBackgroundDownloadRequests
-    summary: Signals the end of a series of <Modules.Newsstand.Issue.downloadAsset> calls. This call notifies the device that the application no longer requires additional time while running in the background.
+            Passbook.addPass({
+                passData: file.blob
+            });
+    parameters:
+      - name: props
+        summary: 
+        type: Dictionary<PassbookAddPassProps>
+
+  - name: containsPass
+    summary: Returns whether the users pass library contains a pass.
     description: |
+        Throws an exception if there is a problem with the pass.
+
+        Returns true if the pass exists in the library or false if the pass does not exist in the library.
+
         **Example**
 
-            Newsstand.beginBackgroundDownloadRequests();
-            issue1.downloadAsset(...);
-            issue2.downloadAsset(...);
-            Newsstand.endBackgroundDownloadRequests();
-            
-  - name: addIssue
-    summary: Adds an issues to the library.
-    description: |
-        Throws an exception if name and date are invalid. Also throws an exception if you use a name that is already taken by another issue.
-        
-        Returns a <Modules.Newsstand.Issue> representing the issue that was added to the library or undefined if the issues could not be added to the library.
-        
-        **Example**
-
-            var issueDate = new Date();
-            issueDate.setFullYear(2013);
-            issueDate.setMonth(0);
-            issueDate.setDate(14);
-            var issue = Newsstand.addIssue({
-                name: "Magazine-0", 
-                date: issueDate
-        	});
+            var contains = Passbook.containsPass({
+                passData: file.blob
+            }); 
 
     parameters:
       - name: props
         summary: 
-        type: Dictionary<NewsstandAddIssueProps>
+        type: Dictionary<PassbookAddPassProps>
     returns: 
-        type: Modules.Newsstand.Issue
-        
-  - name: getIssue
-    summary: Retrieves an issue from the library via its unique name.
+        type: Boolean
+
+  - name: removePass
+    summary: Removes a pass from the user's pass library.
     description: |
-        Returns a <Modules.Newsstand.Issue> representing the issue or undefined if the issue does not exist in the library.
+        **Example**
+
+            Passbook.removePass(pass);
+
+    parameters:
+      - name: pass
+        summary: The pass to be removed from the user's library.
+        type: Modules.Passbook.Pass
+
+
+
+  - name: replacePass
+    summary: Replaces a pass that already exists in the user's library.
+    description: |
+        Throws an exception if there is a problem with the pass.
+
+        Returns a true if the action was successful or false if it failed.
 
         **Example**
 
-            var issue = Newsstand.getIssue({
-            	name: "Magazine-0"
-            });
+            var success = Passbook.replacePass({
+                passData: file.blob
+            }); 
 
     parameters:
       - name: props
         summary: 
-        type: Dictionary<NewsstandGetIssueProps>
+        type: Dictionary<PassbookAddPassProps>
     returns: 
-        type: Modules.Newsstand.Issue
-  
-  - name: removeIssue
-    summary: Removes an issue from the library.
+        type: Boolean
+
+  - name: getPass
+    summary: Retrieves a pass from the user's library using the pass's passTypeIdentifier and serialNumber.
     description: |
-        **Note:** It is possible to hold on to a <Modules.Newsstand.Issue> even after it is removed from the library. This is not something you want to do, because issues are useless if they are not in the library. Most of the properties of the issue will still be available excelpt `contentURL` which will be undefined. 
+        Returns the pass or undefined if it does not exist.
 
         **Example**
 
-            Newsstand.removeIssue(issueToRemove);
-
-    parameters:
-      - name: issue
-        summary: The issue to be removed.
-        type: Modules.Newsstand.Issue
-
-  - name: setBasicAuthentication
-    summary: Sets the username and password that will be used if the <Modules.Newsstand.Issue.downloadAsset> call needs to authenticate.
-    description: |
-        **Example**
-
-            Newsstand.setBasicAuthentication({
-                username: "jalter",
-                password: "password"
-            });
+            var pass = Passbook.getPass({
+                passTypeIdentifier: "pass.com.appc.passkit.lollipop",
+                serialNumber: "E5982H-I2"
+            }); 
 
     parameters:
       - name: props
-        summary:
-        type: Dictionary<NewsstandSetBasicAuthProps>
+        summary: 
+        type: Dictionary<PassbookGetPassProps>
+    returns: 
+        type: Modules.Passbook.Pass
+
+  - name: showPass
+    summary: Displays the pass in the Passbook app.
+    description: |
+        **Example**
+
+            Passbook.showPass(pass);
+
+    parameters:
+      - name: pass
+        summary: The pass to show
+        type: Modules.Passbook.Pass
 
 
 properties:
-  - name: ISSUE_CONTENT_STATUS_NONE
+  - name: passes
     summary: |
-        Assets are not downloading for the issue and there is no content at contentURL.
-    type: Number
+        An unordered array of the passes in the user's library.
+    type: Array<Modules.Passbook.Pass>
     permission: "read-only"
 
-  - name: ISSUE_CONTENT_STATUS_DOWNLOADING
-    summary: |
-        The issue has assets that are currently downloading.
-    type: Number
-    permission: "read-only"
 
-  - name: ISSUE_CONTENT_STATUS_AVAILABLE
-    summary: |
-        Downloading of assets is not taking place and there is issue content at contentURL.
-    type: Number
-    permission: "read-only"
-  
-  - name: issues
-    summary: |
-        Returns an array of <Modules.Newsstand.Issue>s representing the current issues in the library.
-    type: Array<Modules.Newsstand.Issue>
-    permission: "read-only"
-  
-  - name: currentlyReadingIssue
-    summary: |
-        Accesses or sets the newsstand issue that the user is currently reading. If no issue is set, it will be undefined.
-        
-        Newsstand Kit takes this setting into consideration when it purges back issues because of low levels of available flash storage.
-    type: Modules.Newsstand.Issue
-  
-  - name: applicationIconBadgeNumber
-    summary: |
-        Accesses or sets the icon badge number of the app. Instead of displaying a badge number on the app icon, this will set the "new" badge on the app icon if the number is greater than 0.
-    type: Number
-    
-  - name: iconImage
-    summary: |    
-        Sets the image of the application icon.
-    description: |
-        **Note:** If the image is not within the dimensions outlined in the Newsstand Icon section of the [iOS Human Interface Guidelines](http://developer.apple.com/library/ios/#documentation/userexperience/conceptual/mobilehig/IconsImages/IconsImages.html), it may not be displayed.
-        
-        **Note:** Sometimes this does not work on the simulator. Works consistently on device.
-        
-        **Example**
-
-            var file = Ti.Filesystem.getFile(Ti.Filesystem.applicationDataDirectory,'newIcon.png');
-            Newsstand.iconImage = file;
-
-    type: Titanium.Filesystem.File
-    permission: "write-only"
-    
 events:
-  - name: progress
-    summary: Occurs if you call downloadAsset and an issue asset is downloading. This event is only sent when the application is running in the foreground.
-    description: |
-        **Note:** totalBytes only applies to the current file being downloaded.
+  - name: addedpasses
+    summary: Occurs when passes are added to the user's library.
     properties:
-      - name: name
-        type: String
-        summary: The unique name of the issue the asset is being downloaded for.
-        
-      - name: userInfo
-        type: Object
-        summary: The dictionary of key value pairs that was set when calling <Modules.Newsstand.Issue.downloadAsset>.
-        
-      - name: bytesWritten
-        type: Number
-        summary: The number of bytes downloaded.
-        
-      - name: totalBytes
-        type: Number
-        summary: The total number of bytes to download for the current asset.
-        
-  - name: error
-    summary: Occurs when there is an error while downloading an asset.
+      - name: passes
+        type: Array<Modules.Passbook.Pass>
+        summary: An array of the passes that were added to the user's library.
+
+  - name: removedpasses
+    summary: Occurs when passes are removed from the user's library.
     properties:
-      - name: name
-        type: String
-        summary: The unique name of the issue the asset is being downloaded for.
+      - name: passIds
+        type: Array<PassbookGetPassProps>
+        summary: An array of the passes that were added to the user's library.
 
-      - name: userInfo
-        type: Object
-        summary: The dictionary of key value pairs that was set when calling <Modules.Newsstand.Issue.downloadAsset>.
-
-      - name: description
-        type: String
-        summary: Description of the error.
-
-      - name: code
-        type: String
-        summary: The error code.
-
-  - name: assetcomplete
-    summary: Occurs when each asset download completes.
+  - name: replacedpasses
+    summary: Occurs when passes are replaced in the user's library.
     properties:
-      - name: name
-        type: String
-        summary: The unique name of the issue the asset is being downloaded for.
+      - name: passes
+        type: Array<Modules.Passbook.Pass>
+        summary: An array of the passes that were replaced in the user's library.
 
-      - name: userInfo
-        type: Object
-        summary: The dictionary of key value pairs that was set when calling <Modules.Newsstand.Issue.downloadAsset>.
 
-      - name: filePath
-        type: String
-        summary: The location of the file that was downloaded.
-        
-        
-  - name: issuecomplete
-    summary: Occurs when all of the asset downloads that have been started for an issue are complete. This could be a successful completion or error.
-    properties:
-      - name: name
-        type: String
-        summary: The unique name of the issue.
-          
-      
 ---
-name: NewsstandAddIssueProps
+name: PassbookAddPassProps
 since: "1.0.0"
-platforms: [iphone, ipad]
+platforms: [iphone]
 summary: A dictionary of properties to pass to the method
 properties:
-  - name: name
-    summary: The unique name of the issue to be added to the library. 
-    type: String
-    optional: false
-
-  - name: date
-    summary: The release date of the issue.
-    type: Date
+  - name: passData
+    summary: The blob of the pkpass file
+    type: Titanium.Blob
     optional: false
 
 ---
-name: NewsstandGetIssueProps
+name: PassbookGetPassProps
 since: "1.0.0"
-platforms: [iphone, ipad]
+platforms: [iphone]
 summary: A dictionary of properties to pass to the method
 properties:
-  - name: name
-    summary: The unique name of the issue to be added to the library.
+  - name: passTypeIdentifier
+    summary: 
+    type: String
+    optional: false
+  - name: serialNumber
+    summary: 
     type: String
     optional: false
 
----
-name: NewsstandSetBasicAuthProps
-since: "1.0.0"
-platforms: [iphone, ipad]
-summary: A dictionary of properties to pass to the method
-properties:
-  - name: username
-    summary:
-    type: String
-    optional: false
-    
-  - name: password
-    summary:
-    type: String
-    optional: false
