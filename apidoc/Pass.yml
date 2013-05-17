@@ -72,7 +72,7 @@ properties:
 
   - name: relevantDate
     summary: The date when the pass is most likely to be needed or useful.
-    type: String
+    type: Date
     permission: "read-only"
 
   - name: icon

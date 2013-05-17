@@ -55,14 +55,14 @@ description: |
         
         <key>com.apple.developer.pass-type-identifiers</key>
         <array>
-            <string>$(TeamIdentifierPrefix)pass.com.appc.passbook.lollipop</string>
+            <string>$(TeamIdentifierPrefix)pass.com.appc.passkit.lollipop</string>
         </array>
 
     To enable all pass type identifiers from the provisioning profile (replace the App ID with our own):
 
         <key>keychain-access-groups</key>
         <array>
-            <string>$(AppIdentifierPrefix)com.appc.passbook</string>
+            <string>$(AppIdentifierPrefix)com.appc.passkit</string>
         </array>
     
 extends: Titanium.Module
