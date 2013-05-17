@@ -1,8 +1,7 @@
 /**
- * Your Copyright Here
- *
- * Appcelerator Titanium is Copyright (c) 2009-2010 by Appcelerator, Inc.
- * and licensed under the Apache Public License (version 2)
+ * Ti.Passbook Module
+ * Copyright (c) 2013 by Appcelerator, Inc. All Rights Reserved.
+ * Please see the LICENSE included with this distribution for details.
  */
 
 #import <PassKit/PassKit.h>
@@ -76,15 +75,6 @@
 	[super dealloc];
 }
 
-#pragma mark Internal Memory Management
-
--(void)didReceiveMemoryWarning:(NSNotification*)notification
-{
-	// optionally release any resources that can be dynamically
-	// reloaded once memory is available - such as caches
-	[super didReceiveMemoryWarning:notification];
-}
-
 #pragma mark Listener Notifications
 
 -(void)passLibraryDidChange:(NSNotification *)note
@@ -138,8 +128,6 @@
 
 -(void)addPass:(id)args
 {
-    // User should check for pass in library with containsPass before adding
-    // Will only be called with DATA
     ENSURE_SINGLE_ARG(args, NSDictionary);
     TiBlob *blob = [args objectForKey:@"passData"];
     ENSURE_TYPE(blob, TiBlob);
@@ -166,8 +154,6 @@
 
 -(id)containsPass:(id)args
 {
-    // No Entitlement Needed
-    // Will only be called with DATA
     ENSURE_SINGLE_ARG(args, NSDictionary);
     TiBlob *blob = [args objectForKey:@"passData"];
     ENSURE_TYPE(blob, TiBlob);
@@ -192,8 +178,6 @@
 
 -(id)replacePass:(id)args
 {
-    // replacePassWithPass
-    // Will only be called with DATA
     ENSURE_SINGLE_ARG(args, NSDictionary);
     TiBlob *blob = [args objectForKey:@"passData"];
     ENSURE_TYPE(blob, TiBlob);
@@ -212,7 +196,6 @@
 
 -(TiPassbookPassProxy *)getPass:(id)args
 {
-    // passWithPassTypeIdentifierAndSerialNumber
     ENSURE_SINGLE_ARG(args, NSDictionary);
     NSString *passTypeIdentifier = [args objectForKey:@"passTypeIdentifier"];
     NSString *serialNumber = [args objectForKey:@"serialNumber"];
@@ -230,9 +213,6 @@
 
 -(void)showPass:(id)args
 {
-    // Must be pass from library
-    // Will not open if not in library
-    // Will only be called with TiPassbookPassProxy
     ENSURE_SINGLE_ARG(args, TiPassbookPassProxy);
     
     PKPass *pkPass = [args pass];
@@ -243,8 +223,6 @@
 
 -(NSArray *)passes
 {
-    // Needs Entitlement
-    // No order
     NSArray *pkPasses = [_passLibrary passes];
     NSMutableArray *result = [NSMutableArray arrayWithCapacity:[pkPasses count]];
     

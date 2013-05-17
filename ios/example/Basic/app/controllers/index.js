@@ -1,4 +1,12 @@
 
+/*
+ * Entitlements
+ * This example will work without entitlements on the simulator.
+ *
+ * To test on device, you will need to setup entitlements to allow the app to access the passes on the device.
+ * See the module documentation for instructions on how to setup entitlements.
+ */
+
 var rows = [
 	{
 		title: "isPassLibraryAvailable",

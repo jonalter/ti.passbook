@@ -42,7 +42,7 @@ description: |
     8. Go to the [Passbook Developer page](https://developer.apple.com/Passbook/) and download the "Example Passes and Sample Code"
     9. In the "pass.json" file of one of the raw passes found in "Example Passes and Sample Code", replace the value for "passTypeIdentifier" with your Pass Type ID
     10. In the "Example Passes and Sample Code" open the "signpass" project with Xcode and build it
-    11. Use the newload created signcode command line program to sign the pass that you just edited
+    11. Use the newly created signcode command line program to sign the pass that you just edited
     12. You can add your new pass to your device by emailing it to your device or you can drag it into the simulator
 
     #### Entitlements
@@ -237,11 +237,11 @@ platforms: [iphone]
 summary: A dictionary of properties to pass to the method
 properties:
   - name: passTypeIdentifier
-    summary: 
+    summary: The pass type ID of the pass
     type: String
     optional: false
   - name: serialNumber
-    summary: 
+    summary: The serial number of the pass
     type: String
     optional: false
 

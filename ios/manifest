@@ -6,7 +6,7 @@ version: 1.0.0
 apiversion: 2
 description: Apple PassKit module
 author: Jon Alter
-license: Apache Public License v2
+license: Apache License, Version 2.0
 copyright: Copyright (c) 2013 by Appcelerator, Inc.
 
 

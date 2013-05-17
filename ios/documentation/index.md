@@ -1,39 +1,47 @@
-# passbook Module
+# ti.passbook Module
 
 ## Description
 
-TODO: Enter your module description here
+The Passbook module allows you to access Apple's PassKit APIs
 
-## Accessing the passbook Module
+## Dependencies
+
+This module requires iOS 6 or greater
+
+## Getting Started
+
+View the [Using Titanium Modules](http://docs.appcelerator.com/titanium/latest/#!/guide/Using_Titanium_Modules) document for instructions on getting
+started with using this module in your application.
+
+## Accessing the Module
 
 To access this module from JavaScript, you would do the following:
 
-	var passbook = require("ti.passbook");
+	var Passbook = require("ti.passbook");
 
-The passbook variable is a reference to the Module object.	
-
-## Reference
-
-TODO: If your module has an API, you should document
-the reference here.
-
-### ___PROJECTNAMEASIDENTIFIER__.function
-
-TODO: This is an example of a module function.
-
-### ___PROJECTNAMEASIDENTIFIER__.property
-
-TODO: This is an example of a module property.
+The `Passbook` variable is a reference to the Module object.
 
 ## Usage
 
-TODO: Enter your usage example here
+See the example application(s) in the `example` folder of the module.
+
+## Documentation
+
+* [Passbook for Developers](https://developer.apple.com/Passbook/)
+* [Passbook Kit Framework Reference](https://developer.apple.com/library/ios/#documentation/UserExperience/Reference/PassKit_Framework/_index.html)
 
 ## Author
 
-TODO: Enter your author name, email and other contact
-details you want to share here. 
+Jon Alter
+
+## Module History
+
+View the [change log](changelog.html) for this module.
+
+## Feedback and Support
+
+Please direct all questions, feedback, and concerns to [info@appcelerator.com](mailto:info@appcelerator.com?subject=iOS%20Passbook%20Module).
 
 ## License
 
-TODO: Enter your license/legal information here.
+Copyright(c) 2013 by Appcelerator, Inc. All Rights Reserved. Please see the LICENSE file included in the distribution for further details.
